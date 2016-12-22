@@ -1,0 +1,296 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="DictionariesMapper">
+	
+	<resultMap type="Dictionaries" id="dictResultMap">
+		<id column="DICTIONARIES_ID" property="DICTIONARIES_ID"/>
+		<result column="NAME" property="NAME"/>
+		<result column="PARENT_ID" property="PARENT_ID"/>
+		<result column="BIANMA" property="BIANMA"/>
+	</resultMap>
+	
+	<!--表名 -->
+	<sql id="tableName">
+		SYS_DICTIONARIES
+	</sql>
+	
+	<!-- 字段 -->
+	<sql id="Field">
+		DICTIONARIES_ID,
+		NAME,	
+		NAME_TW,	
+		NAME_EN,	
+		NAME_JA,	
+		NAME_MY,	
+		BIANMA,	
+		ORDER_BY,	
+		PARENT_ID,	
+		BZ,	
+		ICON,	
+		TBSNAME,
+		STATE,
+		BAK1
+	</sql>
+	
+	<!-- 字段值 -->
+	<sql id="FieldValue">
+		#{DICTIONARIES_ID},
+		#{NAME},	
+		#{NAME_TW},	
+		#{NAME_EN},	
+		#{NAME_JA},	
+		#{NAME_MY},	
+		#{BIANMA},	
+		#{ORDER_BY},	
+		#{PARENT_ID},	
+		#{BZ},	
+		#{ICON},	
+		#{TBSNAME},
+		#{STATE},
+		#{BAK1}
+	</sql>
+	
+	<!-- 新增-->
+	<insert id="save" parameterType="pd">
+		insert into 
+	<include refid="tableName"></include>
+		(
+	<include refid="Field"></include>
+		) values (
+	<include refid="FieldValue"></include>
+		)
+	</insert>
+	
+	<!-- 删除-->
+	<delete id="delete" parameterType="pd">
+		delete from
+		<include refid="tableName"></include>
+		where 
+			DICTIONARIES_ID = #{DICTIONARIES_ID}
+	</delete>
+	
+	<!-- 修改 -->
+	<update id="edit" parameterType="pd">
+		update
+		<include refid="tableName"></include>
+		set 
+			NAME = #{NAME},
+			NAME_TW = #{NAME_TW},
+			NAME_EN = #{NAME_EN},
+			NAME_JA = #{NAME_JA},
+			NAME_MY = #{NAME_MY},
+			ORDER_BY = #{ORDER_BY},
+			BZ = #{BZ},
+			ICON = #{ICON},
+			TBSNAME = #{TBSNAME},
+			STATE = #{STATE},
+			BAK1 = #{BAK1},
+			DICTIONARIES_ID = DICTIONARIES_ID
+		where 
+			DICTIONARIES_ID = #{DICTIONARIES_ID}
+	</update>
+	
+	<!-- 通过ID获取数据 -->
+	<select id="findById" parameterType="pd" resultType="pd">
+		select 
+		<include refid="Field"></include>
+		from 
+		<include refid="tableName"></include>
+		where 
+			DICTIONARIES_ID = #{DICTIONARIES_ID}
+	</select>
+	
+	<!-- 通过编码获取数据 -->
+	<select id="findByBianma" parameterType="pd" resultType="pd">
+		select 
+		<include refid="Field"></include>
+		from 
+		<include refid="tableName"></include>
+		where 
+			BIANMA = #{BIANMA}
+			<if test="state != null and state != ''">
+			and STATE != '1'
+			</if>
+	</select>
+	
+	<!-- 列表 -->
+	<select id="datalistPage" parameterType="page" resultType="pd">
+		select
+		<include refid="Field"></include>
+		from 
+		<include refid="tableName"></include>
+		where
+			1=1
+		<if test="pd.DICTIONARIES_ID!= null and pd.DICTIONARIES_ID != ''"><!-- 检索 -->
+			and PARENT_ID = #{pd.DICTIONARIES_ID}
+		</if>
+		<if test="pd.STATE != null and pd.STATE != ''">
+			and STATE = #{pd.STATE}
+		</if>
+		<if test="pd.keywords != null and pd.keywords != ''"><!-- 关键词检索 -->
+			and
+				(
+				 NAME LIKE CONCAT(CONCAT('%', #{pd.keywords}),'%')
+				 or 
+				 NAME_TW LIKE CONCAT(CONCAT('%', #{pd.keywords}),'%')
+				 or 
+				 NAME_EN LIKE CONCAT(CONCAT('%', #{pd.keywords}),'%') 
+				 or
+				 NAME_JA LIKE CONCAT(CONCAT('%', #{pd.keywords}),'%')
+				 or 
+				 NAME_MY LIKE CONCAT(CONCAT('%', #{pd.keywords}),'%')
+				 or 
+				 BIANMA LIKE CONCAT(CONCAT('%', #{pd.keywords}),'%')
+				)
+		</if>
+		order by ORDER_BY
+	</select>
+	
+	<!-- 通过ID获取其子级列表 -->
+	<select id="listSubDictByParentId" parameterType="String" resultMap="dictResultMap">
+		select 
+		<include refid="Field"></include>
+		from 
+		<include refid="tableName"></include>
+		where 
+			PARENT_ID = #{parentId} order by ORDER_BY 
+	</select>
+	
+	<!-- 通过ID获取其子级列表 -->
+	<select id="listSubDictByState" parameterType="pd" resultMap="dictResultMap">
+		select 
+		<include refid="Field"></include>
+		from 
+		<include refid="tableName"></include>
+		where 
+			PARENT_ID = #{parentId} and STATE = #{state} order by ORDER_BY
+	</select>
+	
+	<!-- 排查表检查是否被占用 -->
+	<select id="findFromTbs" parameterType="pd" resultType="pd">
+		select
+			count(1) zs
+		from 
+			${thisTable}
+		where
+			BIANMA = #{BIANMA}
+	</select>
+	
+	<!-- 通过编码获取其子级列表 -->
+	<select id="findChildByBianma" parameterType="page" resultType="pd">
+		select
+		<include refid="Field"></include>
+		from
+		<include refid="tableName"></include>
+		where
+		PARENT_ID = (select DICTIONARIES_ID from
+		<include refid="tableName"></include>
+		where
+		BIANMA = #{pd.BIANMA}) 
+		<if test="pd.STATE == 'null'">
+			and STATE is null
+		</if>
+		<if test="pd.STATE == 'notnull'">
+			and STATE is not null
+		</if>
+		<if test="pd.STATE != null and pd.STATE != '' and pd.STATE != 'null' and pd.STATE != 'notnull'">
+			and STATE = #{pd.STATE}
+		</if>
+		<if test="pd.BAK1 !=null  and pd.BAK1!=''  ">
+			and BAK1= #{pd.BAK1}
+		</if>
+		order by ORDER_BY
+	</select>
+	
+	<!-- 通过编码获取其子级列表 ,分页 -->
+	<select id="findChildByBianmalistPage" parameterType="page" resultType="pd">
+		select
+		<include refid="Field"></include>
+		from
+		<include refid="tableName"></include>
+		where
+		PARENT_ID = (select DICTIONARIES_ID from
+		<include refid="tableName"></include>
+		where
+		BIANMA = #{pd.BIANMA}) 
+		<if test="pd.STATE == 'null'">
+			and STATE is null
+		</if>
+		<if test="pd.STATE == 'notnull'">
+			and STATE is not null
+		</if>
+		<if test="pd.STATE != null and pd.STATE != '' and pd.STATE != 'null' and pd.STATE != 'notnull'">
+			and STATE = #{pd.STATE}
+		</if>
+		order by ORDER_BY
+	</select>
+
+	<!-- 通过编码获取其子级列表 -->
+	<select id="findChildsByBianma" parameterType="string" resultType="pd">
+		select
+		<include refid="Field"></include>
+		from
+		<include refid="tableName"></include>
+		where
+		PARENT_ID = (select DICTIONARIES_ID from
+		<include refid="tableName"></include>
+		where
+		BIANMA = #{bianma}) 
+		order by ORDER_BY
+	</select>
+	
+	<!-- 查询对应数据字典结构下的所有子级数据，目前只支持四级 -->
+	<select id="findAllChildById" parameterType="String" resultType="pd">
+		SELECT DICTIONARIES_ID AS id,PARENT_ID AS pId,NAME AS name,BIANMA AS bianma,'true' AS open FROM sys_dictionaries WHERE PARENT_ID = #{id}
+		UNION ALL
+		SELECT DICTIONARIES_ID AS id,PARENT_ID AS pId,NAME AS name,BIANMA AS bianma,'true' AS open FROM sys_dictionaries WHERE PARENT_ID IN (
+			SELECT DICTIONARIES_ID FROM sys_dictionaries WHERE PARENT_ID = #{id}
+		)
+		UNION ALL
+		SELECT DICTIONARIES_ID AS id,PARENT_ID AS pId,NAME AS name,BIANMA AS bianma,'true' AS open FROM sys_dictionaries WHERE PARENT_ID IN(
+			SELECT DICTIONARIES_ID FROM sys_dictionaries WHERE PARENT_ID IN (
+				SELECT DICTIONARIES_ID FROM sys_dictionaries WHERE PARENT_ID = #{id}
+			)
+		)
+		UNION ALL
+		SELECT DICTIONARIES_ID AS id,PARENT_ID AS pId,NAME AS name,BIANMA AS bianma,'true' AS open FROM sys_dictionaries WHERE PARENT_ID IN(
+			SELECT DICTIONARIES_ID FROM sys_dictionaries WHERE PARENT_ID IN (
+				SELECT DICTIONARIES_ID FROM sys_dictionaries WHERE PARENT_ID IN (
+					SELECT DICTIONARIES_ID FROM sys_dictionaries WHERE PARENT_ID = #{id}
+				)
+			)
+		)
+	</select>
+	
+	<!-- 查询产品结构列表 -->
+	<select id="getProductConstructionlistPage" parameterType="page" resultType="pd">
+		select * from (select * from sys_dictionaries where PARENT_ID = #{pd.DICTIONARIES_ID}
+			UNION ALL
+			select * from sys_dictionaries where PARENT_ID in (
+				select DICTIONARIES_ID from sys_dictionaries where PARENT_ID = #{pd.DICTIONARIES_ID}
+			)
+			UNION ALL
+			select * from sys_dictionaries where PARENT_ID in (
+				select DICTIONARIES_ID from sys_dictionaries where PARENT_ID in (
+					select DICTIONARIES_ID from sys_dictionaries where PARENT_ID = #{pd.DICTIONARIES_ID}
+				)
+			)
+		) a where a.STATE = #{pd.STATE} 
+		<if test="pd.keywords != null and pd.keywords != ''"><!-- 关键词检索 -->
+			and(
+				 a.NAME LIKE CONCAT(CONCAT('%', #{pd.keywords}),'%')
+				 or 
+				 a.NAME_TW LIKE CONCAT(CONCAT('%', #{pd.keywords}),'%')
+				 or 
+				 a.NAME_EN LIKE CONCAT(CONCAT('%', #{pd.keywords}),'%') 
+				 or
+				 a.NAME_JA LIKE CONCAT(CONCAT('%', #{pd.keywords}),'%')
+				 or 
+				 a.NAME_MY LIKE CONCAT(CONCAT('%', #{pd.keywords}),'%')
+				 or 
+				 a.BIANMA LIKE CONCAT(CONCAT('%', #{pd.keywords}),'%')
+			 )
+		</if>
+		order by ORDER_BY
+	</select>
+</mapper>
