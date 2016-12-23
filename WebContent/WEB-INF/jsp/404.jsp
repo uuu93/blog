@@ -22,7 +22,6 @@
         <tbody><tr>
           <td width="230"><a href="#"><img src="static/images/404.jpg" style="border:0;"></a></td>
           <td width="400" align="center" style="color:#333333; font-size:16px; font-weight:bold;"><p>哎唷！页面木有找到哦。<a href="javascript:history.back(-1)">返回</a></p>
-            <p>你可以点击进入 <a href="http://demo.ecapp.cc/mec/">店小二首页</a> 或者  <a href="http://www.shuhuasoft.com/">深圳市曙华软件技术服务有限公司</a></p></td>
         </tr>
       </tbody></table></td>
   </tr>
